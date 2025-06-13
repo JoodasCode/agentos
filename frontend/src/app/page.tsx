@@ -66,7 +66,7 @@ export default function AgentOSChat() {
         ? `/api/chat/continue/${conversationId}`
         : '/api/chat/start'
       
-      const response = await fetch(`http://localhost:8000${endpoint}`, {
+      const response = await fetch(`https://agentos-production-6348.up.railway.app${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
