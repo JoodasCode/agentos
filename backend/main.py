@@ -1,14 +1,56 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Dict, Any
 import os
+
+from app.core.config import settings
+from app.core.logging import get_logger
+from app.core.agentscope_config import initialize_agentscope, validate_openai_connection
+from app.services.conversation_manager import ConversationManager
+from app.api.routes import health, conversation, automation
+
+logger = get_logger(__name__)
+
+# Global conversation manager
+conversation_manager = None
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan events"""
+    global conversation_manager
+    
+    # Startup
+    logger.info("Starting Agent OS V2...")
+    
+    # Initialize AgentScope
+    if initialize_agentscope():
+        logger.info("AgentScope initialized successfully")
+    else:
+        logger.warning("AgentScope initialization failed - using fallback mode")
+    
+    # Validate OpenAI connection
+    if validate_openai_connection():
+        logger.info("OpenAI API connection validated")
+    else:
+        logger.warning("OpenAI API validation failed - check API key")
+    
+    # Initialize conversation manager
+    conversation_manager = ConversationManager()
+    logger.info("Conversation manager initialized")
+    
+    yield
+    
+    # Shutdown
+    logger.info("Shutting down Agent OS V2...")
 
 # Create FastAPI app
 app = FastAPI(
     title="Agent OS V2 - Multi-Agent Platform",
     description="Conversational AI agents with Trigger.dev automation",
-    version="2.0.0"
+    version="2.0.0",
+    lifespan=lifespan
 )
 
 # CORS middleware
@@ -51,48 +93,97 @@ async def health_check():
 @app.post("/chat/start")
 async def start_conversation(data: Dict[str, Any]):
     """Start a new conversation with agents"""
+    global conversation_manager
+    
     message = data.get("message", "")
+    user_id = data.get("user_id", "default_user")
     
     if not message:
         raise HTTPException(status_code=400, detail="Message is required")
     
-    # Mock intelligent agent response (will be real AgentScope integration)
-    agent_response = _get_mock_agent_response(message)
+    if not conversation_manager:
+        raise HTTPException(status_code=500, detail="Conversation manager not initialized")
     
-    return {
-        "conversation_id": f"conv_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}",
-        "agent_responses": [agent_response],
-        "conversation_state": {
-            "ready_for_action": False,
-            "lead_agent": agent_response["agent_name"],
-            "questions_asked": [],
-            "answers_collected": {}
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        # Generate new conversation ID
+        conversation_id = f"conv_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Use real conversation manager
+        response = await conversation_manager.handle_user_message(
+            message=message,
+            user_id=user_id,
+            conversation_id=conversation_id
+        )
+        
+        return {
+            "conversation_id": response.conversation_id,
+            "agent_responses": [
+                {
+                    "agent_name": resp.agent_name,
+                    "content": resp.content,
+                    "timestamp": resp.timestamp.isoformat(),
+                    "agent_type": "lead"
+                }
+                for resp in response.agent_responses
+            ],
+            "conversation_state": {
+                "ready_for_action": response.conversation_state.ready_for_action,
+                "lead_agent": response.conversation_state.lead_agent,
+                "questions_asked": response.conversation_state.questions_asked,
+                "answers_collected": response.conversation_state.answers_collected
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in start_conversation: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.post("/chat/continue/{conversation_id}")
 async def continue_conversation(conversation_id: str, data: Dict[str, Any]):
     """Continue an existing conversation"""
+    global conversation_manager
+    
     message = data.get("message", "")
+    user_id = data.get("user_id", "default_user")
     
     if not message:
         raise HTTPException(status_code=400, detail="Message is required")
     
-    # Mock follow-up response
-    agent_response = _get_mock_followup_response(message)
+    if not conversation_manager:
+        raise HTTPException(status_code=500, detail="Conversation manager not initialized")
     
-    return {
-        "conversation_id": conversation_id,
-        "agent_responses": [agent_response],
-        "conversation_state": {
-            "ready_for_action": _should_transition_to_action(message),
-            "lead_agent": agent_response["agent_name"],
-            "questions_asked": ["timeline", "preferences"],
-            "answers_collected": {"last_message": message}
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    }
+    try:
+        # Use real conversation manager
+        response = await conversation_manager.handle_user_message(
+            message=message,
+            user_id=user_id,
+            conversation_id=conversation_id
+        )
+        
+        return {
+            "conversation_id": response.conversation_id,
+            "agent_responses": [
+                {
+                    "agent_name": resp.agent_name,
+                    "content": resp.content,
+                    "timestamp": resp.timestamp.isoformat(),
+                    "agent_type": "followup"
+                }
+                for resp in response.agent_responses
+            ],
+            "conversation_state": {
+                "ready_for_action": response.conversation_state.ready_for_action,
+                "lead_agent": response.conversation_state.lead_agent,
+                "questions_asked": response.conversation_state.questions_asked,
+                "answers_collected": response.conversation_state.answers_collected
+            },
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in continue_conversation: {e}")
+        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
 @app.get("/automation/capabilities")
 async def get_automation_capabilities():
@@ -144,45 +235,10 @@ async def execute_automation(data: Dict[str, Any]):
         "timestamp": datetime.utcnow().isoformat()
     }
 
-# Helper functions for mock responses
-def _get_mock_agent_response(message: str) -> Dict[str, Any]:
-    """Generate mock agent response based on message content"""
-    message_lower = message.lower()
-    
-    # Determine lead agent based on content
-    if any(word in message_lower for word in ["launch", "strategy", "plan", "timeline"]):
-        agent = "Alex"
-        content = f"Hi! I'm Alex, your strategic planning agent. I see you want to work on: '{message}'. Let me help you create a solid plan. When are you looking to launch this?"
-    elif any(word in message_lower for word in ["content", "copy", "creative", "marketing"]):
-        agent = "Dana"
-        content = f"Hey there! I'm Dana, your creative content specialist. I love what you're thinking with: '{message}'. What's the tone and vibe you're going for?"
-    elif any(word in message_lower for word in ["data", "analytics", "metrics", "track"]):
-        agent = "Riley"
-        content = f"Hello! I'm Riley, your data analysis expert. Interesting project: '{message}'. What key metrics should we be tracking for success?"
-    else:
-        agent = "Alex"
-        content = f"Hi! I'm Alex from the Agent OS team. I'd love to help you with: '{message}'. Let me understand what you're looking to accomplish."
-    
-    return {
-        "agent_name": agent,
-        "content": content,
-        "timestamp": datetime.utcnow().isoformat(),
-        "agent_type": "lead"
-    }
-
-def _get_mock_followup_response(message: str) -> Dict[str, Any]:
-    """Generate mock follow-up response"""
-    return {
-        "agent_name": "Alex",
-        "content": f"Thanks for that info: '{message}'. Based on what you've shared, I can help set up the automation. Should we proceed with the workflow?",
-        "timestamp": datetime.utcnow().isoformat(),
-        "agent_type": "followup"
-    }
-
-def _should_transition_to_action(message: str) -> bool:
-    """Determine if conversation is ready for action"""
-    action_keywords = ["yes", "go ahead", "let's do it", "start", "begin", "ready"]
-    return any(keyword in message.lower() for keyword in action_keywords)
+# Include API routes
+app.include_router(health.router, prefix="/api/v1", tags=["health"])
+app.include_router(conversation.router, prefix="/api/v1", tags=["conversation"])
+app.include_router(automation.router, prefix="/api/v1", tags=["automation"])
 
 if __name__ == "__main__":
     import uvicorn
