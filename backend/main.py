@@ -22,23 +22,41 @@ async def lifespan(app: FastAPI):
     global conversation_manager
     
     # Startup
-    logger.info("Starting Agent OS V2...")
+    logger.info("🚀 Starting Agent OS V2...")
+    
+    # Check environment variables first
+    import os
+    openai_key = os.getenv("OPENAI_API_KEY")
+    if openai_key:
+        logger.info(f"✅ OPENAI_API_KEY found (length: {len(openai_key)})")
+    else:
+        logger.error("❌ OPENAI_API_KEY not found in environment!")
     
     # Initialize AgentScope
-    if initialize_agentscope():
-        logger.info("AgentScope initialized successfully")
-    else:
-        logger.warning("AgentScope initialization failed - using fallback mode")
+    try:
+        if initialize_agentscope():
+            logger.info("✅ AgentScope initialized successfully")
+        else:
+            logger.warning("⚠️ AgentScope initialization failed - using fallback mode")
+    except Exception as e:
+        logger.error(f"❌ AgentScope initialization exception: {e}")
     
     # Validate OpenAI connection
-    if validate_openai_connection():
-        logger.info("OpenAI API connection validated")
-    else:
-        logger.warning("OpenAI API validation failed - check API key")
+    try:
+        if validate_openai_connection():
+            logger.info("✅ OpenAI API connection validated")
+        else:
+            logger.warning("⚠️ OpenAI API validation failed - check API key")
+    except Exception as e:
+        logger.error(f"❌ OpenAI validation exception: {e}")
     
     # Initialize conversation manager
-    conversation_manager = ConversationManager()
-    logger.info("Conversation manager initialized")
+    try:
+        conversation_manager = ConversationManager()
+        logger.info("✅ Conversation manager initialized")
+    except Exception as e:
+        logger.error(f"❌ Conversation manager initialization failed: {e}")
+        conversation_manager = None
     
     yield
     
@@ -232,6 +250,55 @@ async def execute_automation(data: Dict[str, Any]):
         "status": "queued",
         "estimated_completion": "2-5 minutes",
         "parameters": parameters,
+        "timestamp": datetime.utcnow().isoformat()
+    }
+
+@app.get("/debug/agent-health")
+async def debug_agent_health():
+    """Debug endpoint to check agent and OpenAI integration status"""
+    import os
+    
+    # Check environment variables
+    openai_key_exists = os.getenv("OPENAI_API_KEY") is not None
+    openai_key_length = len(os.getenv("OPENAI_API_KEY", "")) if openai_key_exists else 0
+    
+    # Check AgentScope initialization
+    agentscope_initialized = conversation_manager is not None
+    
+    # Check if we can import required modules
+    try:
+        import agentscope
+        agentscope_import = True
+        agentscope_version = getattr(agentscope, '__version__', 'unknown')
+    except ImportError as e:
+        agentscope_import = False
+        agentscope_version = f"Import failed: {e}"
+    
+    try:
+        import openai
+        openai_import = True
+        openai_version = getattr(openai, '__version__', 'unknown')
+    except ImportError as e:
+        openai_import = False
+        openai_version = f"Import failed: {e}"
+    
+    return {
+        "status": "debug_info",
+        "environment": {
+            "openai_key_exists": openai_key_exists,
+            "openai_key_length": openai_key_length,
+            "railway_env": os.getenv("RAILWAY_ENVIRONMENT", "not_set")
+        },
+        "imports": {
+            "agentscope_import": agentscope_import,
+            "agentscope_version": agentscope_version,
+            "openai_import": openai_import,
+            "openai_version": openai_version
+        },
+        "initialization": {
+            "conversation_manager_exists": agentscope_initialized,
+            "conversation_manager_type": type(conversation_manager).__name__ if conversation_manager else None
+        },
         "timestamp": datetime.utcnow().isoformat()
     }
 
