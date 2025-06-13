@@ -67,6 +67,13 @@ class ConversationRequest(BaseModel):
     conversation_id: Optional[str] = None
     context: Optional[Dict[str, Any]] = None
 
+class QuickResponseRequest(BaseModel):
+    option_id: str
+    value: str
+    conversation_id: str
+    user_id: str
+    context: Optional[Dict[str, Any]] = None
+
 class ConversationResponse(BaseModel):
     type: ConversationType
     conversation_id: str
