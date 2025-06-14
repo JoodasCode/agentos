@@ -10,6 +10,7 @@ class SupportedService(str, Enum):
     NOTION = "notion"
     SLACK = "slack"
     GITHUB = "github"
+    GOOGLE_CALENDAR = "google_calendar"
     RESEND = "resend"
     SUPABASE = "supabase"
     DEEPGRAM = "deepgram"
@@ -87,6 +88,13 @@ SERVICE_CONFIGS = {
         required_scopes=["repo", "read:org"],
         setup_url="https://github.com/settings/tokens",
         instructions="1. Go to github.com/settings/tokens\n2. Generate new token (classic)\n3. Select scopes: repo, read:org\n4. Set expiration as needed\n5. Copy and paste the token"
+    ),
+    SupportedService.GOOGLE_CALENDAR: ServiceCapability(
+        service=SupportedService.GOOGLE_CALENDAR,
+        capabilities=["Event creation", "Calendar management", "Meeting scheduling", "Availability checking"],
+        required_scopes=["https://www.googleapis.com/auth/calendar"],
+        setup_url="https://console.cloud.google.com/apis/credentials",
+        instructions="1. Go to Google Cloud Console\n2. Create or select project\n3. Enable Calendar API\n4. Create credentials (API key or OAuth)\n5. Copy and paste the key"
     ),
     SupportedService.RESEND: ServiceCapability(
         service=SupportedService.RESEND,
