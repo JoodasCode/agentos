@@ -248,17 +248,8 @@ async def debug_agent_health():
     openai_key_exists = os.getenv("OPENAI_API_KEY") is not None
     openai_key_length = len(os.getenv("OPENAI_API_KEY", "")) if openai_key_exists else 0
     
-    # Check AgentScope initialization
-    agentscope_initialized = conversation_manager is not None
-    
-    # Check if we can import required modules
-    try:
-        import agentscope
-        agentscope_import = True
-        agentscope_version = getattr(agentscope, '__version__', 'unknown')
-    except ImportError as e:
-        agentscope_import = False
-        agentscope_version = f"Import failed: {e}"
+    # Check OpenAI agents initialization
+    agents_initialized = conversation_manager is not None
     
     try:
         import openai
@@ -276,13 +267,11 @@ async def debug_agent_health():
             "railway_env": os.getenv("RAILWAY_ENVIRONMENT", "not_set")
         },
         "imports": {
-            "agentscope_import": agentscope_import,
-            "agentscope_version": agentscope_version,
             "openai_import": openai_import,
             "openai_version": openai_version
         },
         "initialization": {
-            "conversation_manager_exists": agentscope_initialized,
+            "conversation_manager_exists": agents_initialized,
             "conversation_manager_type": type(conversation_manager).__name__ if conversation_manager else None
         },
         "timestamp": datetime.utcnow().isoformat()
