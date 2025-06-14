@@ -1,5 +1,7 @@
 # Agent OS V2 - Multi-Agent Conversational System
 
+<!-- Trigger deployment: 2024-06-14 -->
+
 A sophisticated multi-agent system featuring Alex (Strategic Planning), Dana (Creative Content), Riley (Data Analysis), and Jamie (Operations).
 
 ## 🚀 Quick Deploy to Vercel
