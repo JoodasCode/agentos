@@ -168,40 +168,56 @@ class ConversationManager:
         message_lower = message.lower()
         responding_agents = []
         
+        logger.info(f"🔍 Determining agents for message: '{message}' (conversation: {conversation_id})")
+        
         # Check for explicit agent requests first (highest priority)
         if any(phrase in message_lower for phrase in ['direct me to dana', 'talk to dana', 'connect me to dana', 'i want dana', '@dana']):
             responding_agents.append("Dana")
+            logger.info(f"✅ Explicit Dana request detected")
         elif any(phrase in message_lower for phrase in ['direct me to riley', 'talk to riley', 'connect me to riley', 'i want riley', '@riley']):
             responding_agents.append("Riley")
+            logger.info(f"✅ Explicit Riley request detected")
         elif any(phrase in message_lower for phrase in ['direct me to jamie', 'talk to jamie', 'connect me to jamie', 'i want jamie', '@jamie']):
             responding_agents.append("Jamie")
+            logger.info(f"✅ Explicit Jamie request detected")
         elif any(phrase in message_lower for phrase in ['direct me to alex', 'talk to alex', 'connect me to alex', 'i want alex', '@alex']):
             responding_agents.append("Alex")
+            logger.info(f"✅ Explicit Alex request detected")
         else:
             # Check if this is the first message in conversation
             conversation = self.conversations.get(conversation_id, {})
             message_count = len([msg for msg in conversation.get("messages", []) if msg.get("sender") == "user"])
             
+            logger.info(f"📊 Message count: {message_count}, First message: {message_count <= 1}")
+            
             if message_count <= 1:
                 # First message - Alex (strategic) leads
                 responding_agents.append("Alex")
+                logger.info(f"🎯 First message - Alex leads")
             else:
                 # Determine based on content keywords
                 if any(word in message_lower for word in ['strategy', 'plan', 'goal', 'timeline', 'launch']):
                     responding_agents.append("Alex")
+                    logger.info(f"🎯 Strategy keywords detected - Alex selected")
                 
                 if any(word in message_lower for word in ['content', 'creative', 'brand', 'marketing', 'social']):
                     responding_agents.append("Dana")
+                    logger.info(f"🎯 Creative keywords detected - Dana selected")
                 
                 if any(word in message_lower for word in ['data', 'metrics', 'analytics', 'track', 'measure']):
                     responding_agents.append("Riley")
+                    logger.info(f"🎯 Data keywords detected - Riley selected")
                 
                 if any(word in message_lower for word in ['automation', 'workflow', 'integrate', 'setup', 'technical']):
                     responding_agents.append("Jamie")
+                    logger.info(f"🎯 Automation keywords detected - Jamie selected")
         
         # Ensure at least one agent responds
         if not responding_agents:
             responding_agents.append("Alex")  # Default to Alex
+            logger.info(f"⚠️ No agents selected - defaulting to Alex")
+        
+        logger.info(f"🎯 Final selected agents: {responding_agents}")
         
         # Limit to 2 agents max for better UX (unless explicit request)
         if not any(phrase in message_lower for phrase in ['direct me to', 'talk to', 'connect me to', 'i want', '@']):
