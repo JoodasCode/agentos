@@ -1,0 +1,32 @@
+{
+  "name": "agentos-trigger-jobs",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "npx trigger.dev@latest dev",
+    "deploy": "npx trigger.dev@latest deploy",
+    "api": "npx ts-node src/api.ts",
+    "start": "npm run api",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "trigger.dev",
+    "automation",
+    "agentos"
+  ],
+  "author": "",
+  "license": "ISC",
+  "description": "Trigger.dev automation jobs for AgentOS",
+  "dependencies": {
+    "@trigger.dev/sdk": "^3.0.0",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "cors": "^2.8.5",
+    "express": "^5.1.0",
+    "ts-node": "^10.9.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.8.3"
+  }
+}
