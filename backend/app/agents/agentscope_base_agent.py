@@ -161,16 +161,16 @@ Remember: You're part of a team helping users with Product Hunt launches and bus
         # Generate contextual quick options based on agent expertise
         if "timeline" in user_message.lower() or "when" in user_message.lower():
             options.extend([
-                QuickOption(id="timeline_asap", text="ASAP", value="I need to launch as soon as possible"),
-                QuickOption(id="timeline_1week", text="1 week", value="I'm planning to launch in about 1 week"),
-                QuickOption(id="timeline_1month", text="1 month", value="I have about 1 month to prepare")
+                QuickOption(id="timeline_asap", label="ASAP", value="I need to launch as soon as possible"),
+                QuickOption(id="timeline_1week", label="1 week", value="I'm planning to launch in about 1 week"),
+                QuickOption(id="timeline_1month", label="1 month", value="I have about 1 month to prepare")
             ])
         
         if "budget" in user_message.lower() or "cost" in user_message.lower():
             options.extend([
-                QuickOption(id="budget_low", text="Minimal budget", value="I'm working with a very limited budget"),
-                QuickOption(id="budget_medium", text="Moderate budget", value="I have a moderate budget for this launch"),
-                QuickOption(id="budget_flexible", text="Flexible budget", value="Budget is flexible based on ROI")
+                QuickOption(id="budget_low", label="Minimal budget", value="I'm working with a very limited budget"),
+                QuickOption(id="budget_medium", label="Moderate budget", value="I have a moderate budget for this launch"),
+                QuickOption(id="budget_flexible", label="Flexible budget", value="Budget is flexible based on ROI")
             ])
         
         # Agent-specific quick options

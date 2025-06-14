@@ -239,7 +239,8 @@ class ConversationManager:
         # Collect all questions asked
         all_questions = []
         for response in agent_responses:
-            all_questions.extend(response.questions_asked)
+            if hasattr(response, 'questions_asked') and response.questions_asked:
+                all_questions.extend(response.questions_asked)
         
         # Determine lead agent (first responder or most confident)
         lead_agent = agent_responses[0].agent_name if agent_responses else "Alex"

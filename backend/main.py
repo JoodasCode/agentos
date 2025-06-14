@@ -4,6 +4,11 @@ from contextlib import asynccontextmanager
 from datetime import datetime
 from typing import Dict, Any
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env.local for development
+load_dotenv(".env.local")
+load_dotenv()  # Also load .env if it exists
 
 from app.core.config import settings
 from app.core.logging import get_logger
@@ -148,8 +153,8 @@ async def start_conversation(data: Dict[str, Any]):
             "conversation_state": {
                 "ready_for_action": response.conversation_state.ready_for_action,
                 "lead_agent": response.conversation_state.lead_agent,
-                "questions_asked": response.conversation_state.questions_asked,
-                "answers_collected": response.conversation_state.answers_collected
+                "pending_questions": response.conversation_state.pending_questions,
+                "answered_questions": response.conversation_state.answered_questions
             },
             "timestamp": datetime.utcnow().isoformat()
         }
@@ -194,8 +199,8 @@ async def continue_conversation(conversation_id: str, data: Dict[str, Any]):
             "conversation_state": {
                 "ready_for_action": response.conversation_state.ready_for_action,
                 "lead_agent": response.conversation_state.lead_agent,
-                "questions_asked": response.conversation_state.questions_asked,
-                "answers_collected": response.conversation_state.answers_collected
+                "pending_questions": response.conversation_state.pending_questions,
+                "answered_questions": response.conversation_state.answered_questions
             },
             "timestamp": datetime.utcnow().isoformat()
         }

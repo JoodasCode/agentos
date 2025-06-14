@@ -45,16 +45,16 @@ class Alex(AgentScopeAgent):
         
         if "launch" in user_message.lower() or "product hunt" in user_message.lower():
             options.extend([
-                QuickOption(id="launch_ready", text="Ready to launch", value="My product is ready and I want to launch soon"),
-                QuickOption(id="launch_planning", text="Still planning", value="I'm still in the planning phase"),
-                QuickOption(id="launch_building", text="Still building", value="I'm still building my product")
+                QuickOption(id="launch_ready", label="Ready to launch", value="My product is ready and I want to launch soon"),
+                QuickOption(id="launch_planning", label="Still planning", value="I'm still in the planning phase"),
+                QuickOption(id="launch_building", label="Still building", value="I'm still building my product")
             ])
         
         if "strategy" in user_message.lower() or "plan" in user_message.lower():
             options.extend([
-                QuickOption(id="strategy_new", text="Need full strategy", value="I need help creating a complete launch strategy"),
-                QuickOption(id="strategy_review", text="Review my plan", value="I have a plan but want feedback"),
-                QuickOption(id="strategy_specific", text="Specific question", value="I have a specific strategic question")
+                QuickOption(id="strategy_new", label="Need full strategy", value="I need help creating a complete launch strategy"),
+                QuickOption(id="strategy_review", label="Review my plan", value="I have a plan but want feedback"),
+                QuickOption(id="strategy_specific", label="Specific question", value="I have a specific strategic question")
             ])
         
         return options 
