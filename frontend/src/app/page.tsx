@@ -1,13 +1,6 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Send, Bot, User, Zap, Target, Palette, BarChart3, Settings } from 'lucide-react'
 
 interface Message {
   id: string
@@ -26,10 +19,10 @@ interface ConversationState {
 }
 
 const agentConfig = {
-  Alex: { icon: Target, color: 'bg-blue-500', description: 'Strategic Planning' },
-  Dana: { icon: Palette, color: 'bg-purple-500', description: 'Creative Content' },
-  Riley: { icon: BarChart3, color: 'bg-green-500', description: 'Data Analysis' },
-  Jamie: { icon: Settings, color: 'bg-orange-500', description: 'Operations' }
+  Alex: { color: 'bg-blue-500', description: 'Strategic Planning' },
+  Dana: { color: 'bg-purple-500', description: 'Creative Content' },
+  Riley: { color: 'bg-green-500', description: 'Data Analysis' },
+  Jamie: { color: 'bg-orange-500', description: 'Operations' }
 }
 
 export default function AgentOSChat() {
@@ -38,13 +31,11 @@ export default function AgentOSChat() {
   const [isLoading, setIsLoading] = useState(false)
   const [conversationId, setConversationId] = useState<string | null>(null)
   const [conversationState, setConversationState] = useState<ConversationState | null>(null)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
+  const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    if (scrollAreaRef.current) {
-      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
-    }
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
   const sendMessage = async () => {
@@ -63,8 +54,8 @@ export default function AgentOSChat() {
 
     try {
       const endpoint = conversationId 
-        ? `/api/chat/continue/${conversationId}`
-        : '/api/chat/start'
+        ? `/chat/continue/${conversationId}`
+        : '/chat/start'
       
       const response = await fetch(`https://agentos-production-6348.up.railway.app${endpoint}`, {
         method: 'POST',
@@ -108,7 +99,7 @@ export default function AgentOSChat() {
       console.error('Error sending message:', error)
       const errorMessage: Message = {
         id: Date.now().toString(),
-        content: 'Sorry, I encountered an error. Please make sure the backend server is running on localhost:8000.',
+        content: 'Sorry, I encountered an error. Please make sure the backend server is running.',
         sender: 'agent',
         agentName: 'System',
         timestamp: new Date().toISOString()
@@ -126,191 +117,124 @@ export default function AgentOSChat() {
     }
   }
 
-  const getAgentAvatar = (agentName?: string) => {
-    if (!agentName || !agentConfig[agentName as keyof typeof agentConfig]) {
-      return { icon: Bot, color: 'bg-gray-500', description: 'AI Assistant' }
-    }
-    return agentConfig[agentName as keyof typeof agentConfig]
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4">
+    <div className="min-h-screen bg-gray-50 p-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
-                <Bot className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold">Agent OS V2</h1>
-                <p className="text-sm text-muted-foreground">Multi-Agent Conversational Platform</p>
-              </div>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {Object.entries(agentConfig).map(([name, config]) => (
-                <div key={name} className="flex items-center gap-2 p-2 rounded-lg bg-slate-50">
-                  <div className={`p-1.5 rounded-full ${config.color}`}>
-                    <config.icon className="h-4 w-4 text-white" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-sm">{name}</p>
-                    <p className="text-xs text-muted-foreground">{config.description}</p>
-                  </div>
+        <div className="bg-white rounded-lg shadow-sm mb-6 p-6">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Agent OS V2</h1>
+          <p className="text-gray-600 mb-4">Multi-Agent Conversational Platform</p>
+          
+          {/* Agent Status */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {Object.entries(agentConfig).map(([name, config]) => (
+              <div key={name} className="flex items-center gap-2 p-3 rounded-lg bg-gray-50">
+                <div className={`w-3 h-3 rounded-full ${config.color}`}></div>
+                <div>
+                  <p className="font-medium text-sm">{name}</p>
+                  <p className="text-xs text-gray-500">{config.description}</p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* Chat Interface */}
-        <Card className="h-[600px] flex flex-col">
-          <CardHeader className="pb-3">
+        <div className="bg-white rounded-lg shadow-sm h-[600px] flex flex-col">
+          <div className="p-4 border-b border-gray-200">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Conversation</CardTitle>
+              <h2 className="text-lg font-semibold">Conversation</h2>
               {conversationState && (
                 <div className="flex gap-2">
-                  <Badge variant={conversationState.ready_for_action ? "default" : "secondary"}>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    conversationState.ready_for_action 
+                      ? 'bg-green-100 text-green-800' 
+                      : 'bg-yellow-100 text-yellow-800'
+                  }`}>
                     {conversationState.ready_for_action ? "Ready for Action" : "Gathering Info"}
-                  </Badge>
+                  </span>
                   {conversationState.lead_agent && (
-                    <Badge variant="outline">
+                    <span className="px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                       Lead: {conversationState.lead_agent}
-                    </Badge>
+                    </span>
                   )}
                 </div>
               )}
             </div>
-          </CardHeader>
+          </div>
           
-          <CardContent className="flex-1 flex flex-col p-0">
-            {/* Messages */}
-            <ScrollArea className="flex-1 px-6" ref={scrollAreaRef}>
-              <div className="space-y-4 pb-4">
-                {messages.length === 0 && (
-                  <div className="text-center py-12">
-                    <Bot className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                    <h3 className="text-lg font-medium mb-2">Welcome to Agent OS V2</h3>
-                                         <p className="text-muted-foreground">
-                       Start a conversation with our AI agents. They&apos;ll help you with strategy, 
-                       creative content, data analysis, and operations.
-                     </p>
-                  </div>
-                )}
-                
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    className={`flex gap-3 ${
-                      message.sender === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    {message.sender === 'agent' && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className={getAgentAvatar(message.agentName).color}>
-                          {React.createElement(getAgentAvatar(message.agentName).icon, {
-                            className: "h-4 w-4 text-white"
-                          })}
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                    
-                    <div
-                      className={`max-w-[80%] rounded-lg px-4 py-2 ${
-                        message.sender === 'user'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-white border shadow-sm'
-                      }`}
-                    >
-                      {message.sender === 'agent' && message.agentName && (
-                        <p className="text-xs font-medium text-muted-foreground mb-1">
-                          {message.agentName}
-                        </p>
-                      )}
-                      <p className="text-sm">{message.content}</p>
-                    </div>
-                    
-                    {message.sender === 'user' && (
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="bg-blue-500">
-                          <User className="h-4 w-4 text-white" />
-                        </AvatarFallback>
-                      </Avatar>
-                    )}
-                  </div>
-                ))}
-                
-                {isLoading && (
-                  <div className="flex gap-3 justify-start">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback className="bg-gray-500">
-                        <Bot className="h-4 w-4 text-white" />
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="bg-white border shadow-sm rounded-lg px-4 py-2">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-                        <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-                      </div>
-                    </div>
-                  </div>
-                )}
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {messages.length === 0 && (
+              <div className="text-center py-12">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-2xl">🤖</span>
+                </div>
+                <h3 className="text-lg font-medium mb-2">Welcome to Agent OS V2</h3>
+                                 <p className="text-gray-600">
+                   Start a conversation with our AI agents. They&apos;ll help you with strategy, 
+                   creative content, data analysis, and operations.
+                 </p>
               </div>
-            </ScrollArea>
+            )}
 
-            {/* Input */}
-            <div className="border-t p-4">
-              <div className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  placeholder="Ask the agents anything..."
-                  disabled={isLoading}
-                  className="flex-1"
-                />
-                <Button 
-                  onClick={sendMessage} 
-                  disabled={!input.trim() || isLoading}
-                  size="icon"
-                >
-                  <Send className="h-4 w-4" />
-                </Button>
+            {messages.map((message) => (
+              <div key={message.id} className={`flex ${message.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                  message.sender === 'user' 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-900'
+                }`}>
+                  {message.sender === 'agent' && message.agentName && (
+                    <div className="text-xs font-medium mb-1 opacity-75">
+                      {message.agentName}
+                    </div>
+                  )}
+                  <div className="whitespace-pre-wrap">{message.content}</div>
+                  <div className="text-xs opacity-75 mt-1">
+                    {new Date(message.timestamp).toLocaleTimeString()}
+                  </div>
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Press Enter to send • The agents will collaborate to help you
-              </p>
+            ))}
+            
+            {isLoading && (
+              <div className="flex justify-start">
+                <div className="bg-gray-100 text-gray-900 px-4 py-2 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+                    <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+                  </div>
+                </div>
+              </div>
+            )}
+            
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-4 border-t border-gray-200">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Type your message..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                disabled={isLoading}
+              />
+              <button
+                onClick={sendMessage}
+                disabled={isLoading || !input.trim()}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Send
+              </button>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Action Panel */}
-        {conversationState?.ready_for_action && (
-          <Card className="mt-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Zap className="h-5 w-5" />
-                Ready for Automation
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground mb-4">
-                The agents have gathered enough information and are ready to execute automation workflows.
-              </p>
-              <div className="flex gap-2">
-                <Button>
-                  <Zap className="h-4 w-4 mr-2" />
-                  Execute Workflow
-                </Button>
-                <Button variant="outline">View Automation Options</Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+          </div>
+        </div>
       </div>
     </div>
   )
