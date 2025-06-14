@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = "INFO"
     
     # OpenAI
-    OPENAI_API_KEY: Optional[str] = None
+    OPENAI_API_KEY: str = ""
     DEFAULT_MODEL: str = "gpt-4o-mini"
     
     # Supabase
@@ -31,6 +31,15 @@ class Settings(BaseSettings):
     TRIGGER_DEV_API_URL: str = "https://api.trigger.dev"
     TRIGGER_DEV_API_KEY: Optional[str] = None
     TRIGGER_DEV_PROJECT_ID: Optional[str] = None
+    
+    # API Keys from environment
+    SLACK_CLIENT_ID: str = ""
+    SLACK_CLIENT_SECRET: str = ""
+    NOTION_CLIENT_ID: str = ""
+    NOTION_CLIENT_SECRET: str = ""
+    MONDAY_CLIENT_ID: str = ""
+    MONDAY_CLIENT_SECRET: str = ""
+    TRIGGER_SECRET_KEY: str = ""
     
     class Config:
         env_file = ".env"

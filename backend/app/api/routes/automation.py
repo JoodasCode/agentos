@@ -1,252 +1,191 @@
-from fastapi import APIRouter, HTTPException
-from typing import Dict, Any, List
-import uuid
-from datetime import datetime
+"""
+Automation API Routes - Real Trigger.dev Integration
+Provides endpoints to trigger automation workflows
+"""
 
-from app.services.action_bridge import ActionBridge
-from app.services.trigger_service import TriggerService
+from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
+from typing import Dict, Any, Optional, List
+from datetime import datetime
+from pydantic import BaseModel, Field
+
+from app.services.trigger_service import trigger_service
+from app.services.api_key_manager import api_key_manager
 from app.core.logging import get_logger
 
-router = APIRouter()
 logger = get_logger(__name__)
+router = APIRouter()
 
-# Initialize services
-action_bridge = ActionBridge()
-trigger_service = TriggerService()
+# Request Models
+class ProductHuntLaunchRequest(BaseModel):
+    product_name: str = Field(..., description="Name of the product to launch")
+    launch_date: str = Field(..., description="Launch date in ISO format")
+    description: str = Field(..., description="Product description")
+    website: str = Field(..., description="Product website URL")
+    twitter_handle: Optional[str] = Field(None, description="Twitter handle for promotion")
+    slack_webhook: Optional[str] = Field(None, description="Slack webhook for notifications")
 
-@router.post("/convert-conversation")
-async def convert_conversation_to_actions(conversation_data: Dict[str, Any]):
-    """Convert conversation context into actionable job parameters"""
-    
-    return {
-        "success": True,
-        "action_plan": {
-            "execution_plan": {
-                "jobs": [
-                    {
-                        "type": "product_hunt_launch",
-                        "priority": "high",
-                        "estimated_time": "3-5 days"
-                    }
-                ]
-            },
-            "ready_to_execute": False,
-            "validation_results": {
-                "product_hunt_launch": {
-                    "valid": False,
-                    "missing_params": ["launch_date", "product_name"],
-                    "suggestions": ["Please provide launch date", "Please provide product name"]
+class ContentGenerationRequest(BaseModel):
+    content_type: str = Field(..., description="Type of content to generate")
+    topic: str = Field(..., description="Content topic")
+    target_audience: str = Field(..., description="Target audience")
+    tone: str = Field(default="professional", description="Content tone")
+    platforms: Optional[List[str]] = Field(None, description="Target platforms")
+    scheduled_date: Optional[str] = Field(None, description="Scheduled publication date")
+    notion_database_id: Optional[str] = Field(None, description="Notion database ID")
+    slack_channel: Optional[str] = Field(None, description="Slack channel for notifications")
+
+class AnalyticsTrackingRequest(BaseModel):
+    event_type: str = Field(..., description="Type of event to track")
+    user_id: str = Field(..., description="User ID")
+    properties: Dict[str, Any] = Field(..., description="Event properties")
+    scheduled_date: Optional[str] = Field(None, description="Scheduled tracking date")
+
+# Response Models
+class AutomationResponse(BaseModel):
+    success: bool
+    task_id: str
+    run_id: Optional[str] = None
+    status: Optional[str] = None
+    triggered_at: str
+    error: Optional[str] = None
+
+@router.post("/product-hunt-launch", response_model=AutomationResponse)
+async def trigger_product_hunt_launch(
+    request: ProductHuntLaunchRequest,
+    user_id: str = "default_user"  # In production, get from auth
+):
+    """Trigger Product Hunt launch automation"""
+    try:
+        logger.info(f"Triggering Product Hunt launch automation - product: {request.product_name}, user_id: {user_id}")
+        
+        result = await trigger_service.trigger_product_hunt_launch(
+            product_name=request.product_name,
+            launch_date=request.launch_date,
+            description=request.description,
+            website=request.website,
+            twitter_handle=request.twitter_handle,
+            slack_webhook=request.slack_webhook
+        )
+        
+        return AutomationResponse(**result)
+        
+    except ValueError as e:
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to trigger Product Hunt launch: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Automation failed: {str(e)}")
+
+@router.post("/content-generation", response_model=AutomationResponse)
+async def trigger_content_generation(
+    request: ContentGenerationRequest,
+    user_id: str = "default_user"  # In production, get from auth
+):
+    """Trigger content generation automation"""
+    try:
+        logger.info(f"Triggering content generation automation - content_type: {request.content_type}, user_id: {user_id}")
+        
+        # Get API keys for integrations if needed
+        notion_config = None
+        slack_config = None
+        
+        if request.notion_database_id:
+            notion_key = await api_key_manager.get_api_key(user_id, "notion")
+            if notion_key:
+                notion_config = {
+                    "databaseId": request.notion_database_id,
+                    "apiKey": notion_key
                 }
-            }
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-@router.post("/execute-plan")
-async def execute_action_plan(action_plan: Dict[str, Any]):
-    """Execute the complete action plan"""
-    
-    try:
-        logger.info("Executing action plan", 
-                   job_count=len(action_plan.get("job_parameters", {})))
         
-        execution_results = await action_bridge.execute_action_plan(action_plan)
-        
-        logger.info("Action plan executed", 
-                   success=execution_results["success"],
-                   successful_jobs=execution_results.get("successful_jobs", 0))
-        
-        return {
-            "success": True,
-            "execution_results": execution_results,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error executing action plan", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error executing action plan: {str(e)}")
-
-@router.get("/capabilities")
-async def get_automation_capabilities():
-    """Get all available automation capabilities"""
-    
-    return {
-        "success": True,
-        "capabilities": {
-            "product_hunt_launch": {
-                "name": "Product Hunt Launch Automation",
-                "description": "Complete Product Hunt launch workflow",
-                "timeline_options": ["same-day", "1-week", "2-weeks", "1-month", "custom"]
-            },
-            "content_generation": {
-                "name": "Marketing Content Generation", 
-                "description": "Generate marketing content across platforms",
-                "tone_options": ["professional", "casual", "technical", "playful", "authoritative"]
-            }
-        },
-        "timestamp": datetime.utcnow().isoformat()
-    }
-
-@router.get("/capabilities/{capability_name}/options/{option_type}")
-async def get_capability_options(capability_name: str, option_type: str):
-    """Get specific options for a capability"""
-    
-    try:
-        options = await trigger_service.get_capability_options(capability_name, option_type)
-        
-        return {
-            "success": True,
-            "capability": capability_name,
-            "option_type": option_type,
-            "options": options,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error getting capability options", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error getting options: {str(e)}")
-
-@router.post("/validate-job")
-async def validate_job_parameters(job_data: Dict[str, Any]):
-    """Validate job parameters before execution"""
-    
-    try:
-        job_type = job_data.get("job_type")
-        parameters = job_data.get("parameters", {})
-        
-        if not job_type:
-            raise HTTPException(status_code=400, detail="job_type is required")
-        
-        validation_result = await trigger_service.validate_job_parameters(job_type, parameters)
-        
-        return {
-            "success": True,
-            "job_type": job_type,
-            "validation_result": validation_result,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error validating job parameters", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error validating job: {str(e)}")
-
-@router.post("/execute-job")
-async def execute_single_job(job_data: Dict[str, Any]):
-    """Execute a single job"""
-    
-    try:
-        job_type = job_data.get("job_type")
-        parameters = job_data.get("parameters", {})
-        
-        if not job_type:
-            raise HTTPException(status_code=400, detail="job_type is required")
-        
-        # Validate parameters first
-        validation = await trigger_service.validate_job_parameters(job_type, parameters)
-        if not validation["valid"]:
-            return {
-                "success": False,
-                "error": "Invalid job parameters",
-                "validation_result": validation
-            }
-        
-        # Execute job
-        execution_result = await trigger_service.execute_job(job_type, parameters)
-        
-        logger.info("Job executed", 
-                   job_type=job_type,
-                   job_id=execution_result["job_id"])
-        
-        return {
-            "success": True,
-            "execution_result": execution_result,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error executing job", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error executing job: {str(e)}")
-
-@router.get("/job/{job_id}/status")
-async def get_job_status(job_id: str):
-    """Get the status of a running job"""
-    
-    try:
-        status = await trigger_service.get_job_status(job_id)
-        
-        return {
-            "success": True,
-            "job_status": status,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error getting job status", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error getting job status: {str(e)}")
-
-@router.post("/job/{job_id}/cancel")
-async def cancel_job(job_id: str):
-    """Cancel a running job"""
-    
-    try:
-        result = await trigger_service.cancel_job(job_id)
-        
-        logger.info("Job cancelled", job_id=job_id)
-        
-        return {
-            "success": True,
-            "cancellation_result": result,
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error cancelling job", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error cancelling job: {str(e)}")
-
-@router.get("/jobs/history")
-async def get_job_history(limit: int = 10):
-    """Get recent job execution history"""
-    
-    try:
-        history = await trigger_service.get_job_history(limit)
-        
-        return {
-            "success": True,
-            "job_history": history,
-            "count": len(history),
-            "timestamp": datetime.utcnow().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error("Error getting job history", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error getting job history: {str(e)}")
-
-@router.get("/execution/{execution_id}/status")
-async def get_execution_status(execution_id: str):
-    """Get status of all jobs in an execution"""
-    
-    try:
-        # This would typically fetch from database in production
-        # For now, return mock status
-        return {
-            "success": True,
-            "execution_id": execution_id,
-            "status": "running",
-            "jobs": [
-                {
-                    "job_type": "product_hunt_launch",
-                    "status": "running",
-                    "progress": 45
-                },
-                {
-                    "job_type": "content_generation",
-                    "status": "completed",
-                    "progress": 100
+        if request.slack_channel:
+            slack_key = await api_key_manager.get_api_key(user_id, "slack")
+            if slack_key:
+                slack_config = {
+                    "channel": request.slack_channel,
+                    "webhook": slack_key  # Assuming webhook URL stored as API key
                 }
-            ],
-            "timestamp": datetime.utcnow().isoformat()
-        }
         
+        result = await trigger_service.trigger_content_generation(
+            content_type=request.content_type,
+            topic=request.topic,
+            target_audience=request.target_audience,
+            tone=request.tone,
+            platforms=request.platforms,
+            scheduled_date=request.scheduled_date,
+            notion_config=notion_config,
+            slack_config=slack_config
+        )
+        
+        return AutomationResponse(**result)
+        
+    except ValueError as e:
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        logger.error("Error getting execution status", error=str(e))
-        raise HTTPException(status_code=500, detail=f"Error getting execution status: {str(e)}") 
+        logger.error(f"Failed to trigger content generation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Automation failed: {str(e)}")
+
+@router.post("/analytics-tracking", response_model=AutomationResponse)
+async def trigger_analytics_tracking(
+    request: AnalyticsTrackingRequest,
+    user_id: str = "default_user"  # In production, get from auth
+):
+    """Trigger analytics tracking automation"""
+    try:
+        logger.info(f"Triggering analytics tracking automation - event_type: {request.event_type}, user_id: {user_id}")
+        
+        result = await trigger_service.trigger_analytics_tracking(
+            event_type=request.event_type,
+            user_id=user_id,
+            properties=request.properties,
+            scheduled_date=request.scheduled_date
+        )
+        
+        return AutomationResponse(**result)
+        
+    except ValueError as e:
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to trigger analytics tracking: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Automation failed: {str(e)}")
+
+@router.get("/runs/{run_id}")
+async def get_run_status(run_id: str):
+    """Get the status of a Trigger.dev run"""
+    try:
+        result = await trigger_service.get_run_status(run_id)
+        return result
+        
+    except ValueError as e:
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to get run status: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to get status: {str(e)}")
+
+@router.get("/runs")
+async def list_runs(
+    task_id: Optional[str] = None,
+    limit: int = 50
+):
+    """List recent Trigger.dev runs"""
+    try:
+        result = await trigger_service.list_runs(task_id=task_id, limit=limit)
+        return result
+        
+    except ValueError as e:
+        logger.error(f"Configuration error: {str(e)}")
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        logger.error(f"Failed to list runs: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to list runs: {str(e)}")
+
+@router.get("/health")
+async def automation_health():
+    """Check automation service health"""
+    return {
+        "trigger_dev_available": trigger_service.is_available(),
+        "project_ref": trigger_service.project_ref,
+        "timestamp": datetime.utcnow().isoformat()
+    } 

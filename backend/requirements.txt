@@ -8,3 +8,5 @@ httpx==0.25.2
 openai==1.86.0
 agentscope==0.1.5
 cryptography==41.0.7
+supabase==2.3.4
+httpx

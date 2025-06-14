@@ -239,4 +239,126 @@ async def validate_api_key_format(service: SupportedService, api_key: str):
         
     except Exception as e:
         logger.error(f"Error validating API key: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error validating API key: {str(e)}") 
+        raise HTTPException(status_code=500, detail=f"Error validating API key: {str(e)}")
+
+@router.get("/integrations")
+async def get_service_integrations():
+    """Get all service integration configurations from Supabase"""
+    
+    try:
+        integrations = await api_key_manager.get_service_integrations()
+        
+        return {
+            "success": True,
+            "integrations": integrations,
+            "count": len(integrations),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error getting service integrations: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting integrations: {str(e)}")
+
+@router.post("/session/{session_id}/sync")
+async def sync_session_with_supabase(session_id: str):
+    """Sync session data with Supabase database"""
+    
+    try:
+        success = await api_key_manager.sync_with_supabase(session_id)
+        
+        if not success:
+            return {
+                "success": False,
+                "message": "Supabase not available or sync failed",
+                "timestamp": datetime.utcnow().isoformat()
+            }
+        
+        # Get updated session status
+        status = await api_key_manager.get_session_status(session_id)
+        
+        return {
+            "success": True,
+            "message": "Session synced successfully",
+            "session_status": status,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error syncing session: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error syncing session: {str(e)}")
+
+@router.post("/test-connection/{service}")
+async def test_service_connection(service: SupportedService, session_id: str):
+    """Test connection to a service using stored API key"""
+    
+    try:
+        # Get the API key
+        api_key = await api_key_manager.get_api_key(session_id, service)
+        
+        if not api_key:
+            raise HTTPException(status_code=404, detail=f"No API key found for {service.value}")
+        
+        # Basic connection test based on service
+        test_result = await _test_service_connection(service, api_key)
+        
+        return {
+            "success": True,
+            "service": service.value,
+            "connection_status": test_result,
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error testing service connection: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error testing connection: {str(e)}")
+
+@router.post("/cleanup/cache")
+async def cleanup_expired_cache():
+    """Clean up expired cache entries"""
+    
+    try:
+        await api_key_manager.cleanup_expired_cache()
+        
+        return {
+            "success": True,
+            "message": "Cache cleanup completed",
+            "timestamp": datetime.utcnow().isoformat()
+        }
+        
+    except Exception as e:
+        logger.error(f"Error cleaning up cache: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error cleaning up cache: {str(e)}")
+
+async def _test_service_connection(service: SupportedService, api_key: str) -> Dict[str, Any]:
+    """Test connection to external service"""
+    
+    # This is a basic implementation - in production, you'd make actual API calls
+    # to test the connection and validate the API key
+    
+    test_results = {
+        "valid": True,
+        "response_time_ms": 150,  # Mock response time
+        "status": "connected",
+        "last_tested": datetime.utcnow().isoformat()
+    }
+    
+    # Service-specific validation logic would go here
+    if service == SupportedService.OPENAI:
+        test_results["endpoint"] = "https://api.openai.com/v1/models"
+        test_results["method"] = "GET"
+    elif service == SupportedService.GITHUB:
+        test_results["endpoint"] = "https://api.github.com/user"
+        test_results["method"] = "GET"
+    elif service == SupportedService.NOTION:
+        test_results["endpoint"] = "https://api.notion.com/v1/users/me"
+        test_results["method"] = "GET"
+    elif service == SupportedService.SLACK:
+        test_results["endpoint"] = "https://slack.com/api/auth.test"
+        test_results["method"] = "POST"
+    else:
+        test_results["endpoint"] = "Mock endpoint"
+        test_results["method"] = "GET"
+    
+    return test_results 

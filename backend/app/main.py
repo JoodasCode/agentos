@@ -5,7 +5,7 @@ import uvicorn
 
 try:
     from app.core.config import get_settings
-    from app.api.routes import conversation, health, automation, api_keys
+    from app.api.routes import conversation, health, automation, api_keys, integrations
     from app.core.logging import setup_logging
     
     # Setup logging
@@ -43,6 +43,7 @@ try:
     app.include_router(conversation.router, prefix="/api/conversation", tags=["conversation"])
     app.include_router(automation.router, prefix="/api/automation", tags=["automation"])
     app.include_router(api_keys.router, prefix="/api/keys", tags=["api-keys"])
+    app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["integrations"])
 except NameError:
     print("Routers not available - running in basic mode")
 
