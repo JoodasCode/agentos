@@ -1,95 +1,52 @@
-# Agent OS V2 - Multi-Agent Conversational Platform
+# Agent OS V2 - Multi-Agent Conversational System
 
-A full-stack conversational AI platform with specialized agents and automation capabilities.
+A sophisticated multi-agent system featuring Alex (Strategic Planning), Dana (Creative Content), Riley (Data Analysis), and Jamie (Operations).
 
-## 🤖 Features
+## 🚀 Quick Deploy to Vercel
 
-- **4 Specialized Agents**: Alex (Strategy), Dana (Creative), Riley (Data), Jamie (Operations)
-- **Conversational Interface**: Natural dialogue with proactive questioning
-- **Trigger.dev Integration**: Automated workflow execution (coming soon)
-- **Product Hunt Automation**: Complete launch workflows
-- **Real-time Chat**: Beautiful, responsive chat interface
-- **Modern Stack**: Next.js + FastAPI + Shadcn UI
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/YOUR_USERNAME/YOUR_REPO_NAME)
 
 ## 🏗️ Architecture
 
-```
-agent_os_v2/
-├── frontend/          # Next.js + TypeScript + Shadcn UI
-├── backend/           # FastAPI + Python
-└── README.md
-```
+- **Frontend**: Next.js 15 with Tailwind CSS and Shadcn UI
+- **Backend**: Python FastAPI with AgentScope integration
+- **AI**: OpenAI GPT-4 for agent responses
+- **Deployment**: Vercel (Frontend + Serverless Functions)
 
-## 🚀 Quick Start
+## 📋 Environment Variables
 
-### Backend (FastAPI)
-```bash
-cd backend
-pip install -r requirements.txt
-uvicorn main:app --reload
+Add these to your Vercel project:
+
+```
+OPENAI_API_KEY=your_openai_api_key_here
 ```
 
-### Frontend (Next.js)
-```bash
-cd frontend
-npm install
-npm run dev
-```
+## 🛠️ Local Development
 
-## 📡 API Endpoints
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Add your `.env` file with `OPENAI_API_KEY`
+4. Run development server: `npm run dev`
+5. Open [http://localhost:3000](http://localhost:3000)
 
-### Core
-- `GET /` - Service information
-- `GET /health` - Health check
+## 🎯 Features
 
-### Chat
-- `POST /chat/start` - Start new conversation
-- `POST /chat/continue/{id}` - Continue conversation
-
-### Automation
-- `GET /automation/capabilities` - Available automations
-- `POST /automation/execute` - Execute workflows
-
-## 🎨 UI Components
-
-Built with **Shadcn UI** for beautiful, accessible components:
-- Conversational chat interface
-- Agent avatars with personality-based colors
-- Real-time conversation state tracking
-- Automation readiness indicators
+- **Multi-Agent Conversations**: Four specialized AI agents
+- **Real-time Chat**: Instant responses with beautiful UI
+- **Agent Specialization**: Each agent has unique expertise
+- **Conversation Management**: Persistent conversation state
+- **Modern UI**: Clean, responsive design with Shadcn components
 
 ## 🔧 Tech Stack
 
-**Frontend:**
-- Next.js 14 (App Router)
+- Next.js 15 (App Router)
 - TypeScript
 - Tailwind CSS
 - Shadcn UI
-- Lucide React Icons
+- Python FastAPI
+- AgentScope
+- OpenAI GPT-4
 
-**Backend:**
-- FastAPI
-- Python 3.9+
-- Uvicorn
-- Pydantic
+## 📝 License
 
-**Coming Soon:**
-- AgentScope integration
-- Trigger.dev automation
-- Supabase database
-- Real-time WebSocket support
-
-## 🚀 Deployment
-
-Ready for deployment on:
-- **Frontend**: Vercel, Netlify
-- **Backend**: Railway, Render, Fly.io
-
-## 🤝 Contributing
-
-This is the foundation for a powerful multi-agent platform. Future enhancements include:
-- Real AgentScope integration
-- Trigger.dev job execution
-- Database persistence
-- WebSocket real-time updates
-- Advanced agent personalities 
+MIT License
