@@ -18,15 +18,14 @@ from app.models.conversation import (
 
 # Import AgentScope agents
 from app.agents.alex_agentscope import Alex
-# Keep OpenAI agents as backup
-from app.agents.dana_openai import Dana  
-from app.agents.riley_openai import Riley
-from app.agents.jamie_openai import Jamie
+from app.agents.dana_agentscope import Dana
+from app.agents.riley_agentscope import Riley
+from app.agents.jamie_agentscope import Jamie
 
 logger = get_logger(__name__)
 
 class ConversationManager:
-    """Manages multi-agent conversations using OpenAI"""
+    """Manages multi-agent conversations using AgentScope"""
     
     def __init__(self):
         """Initialize the conversation manager with OpenAI agents"""
