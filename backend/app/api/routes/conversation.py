@@ -7,13 +7,17 @@ import uuid
 
 from app.core.logging import get_logger
 from app.models.conversation import ConversationRequest, ConversationResponse, MessageType, QuickResponseRequest
-from app.services.conversation_manager import ConversationManager
 
 router = APIRouter()
 logger = get_logger(__name__)
 
-# Initialize conversation manager (we'll implement this next)
-conversation_manager = ConversationManager()
+# Conversation manager will be injected from main.py
+conversation_manager = None
+
+def set_conversation_manager(manager):
+    """Set the conversation manager instance"""
+    global conversation_manager
+    conversation_manager = manager
 
 class ChatMessage(BaseModel):
     content: str

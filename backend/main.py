@@ -7,8 +7,6 @@ import os
 
 from app.core.config import settings
 from app.core.logging import get_logger
-from app.core.agentscope_config import initialize_agentscope, validate_openai_connection
-from app.services.conversation_manager import ConversationManager
 from app.api.routes import health, conversation, automation
 
 logger = get_logger(__name__)
@@ -22,38 +20,26 @@ async def lifespan(app: FastAPI):
     global conversation_manager
     
     # Startup
-    logger.info("🚀 Starting Agent OS V2...")
+    logger.info("🚀 Starting Agent OS V2 with PraisonAI...")
     
-    # Check environment variables first
-    import os
+    # Check environment variables
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         logger.info(f"✅ OPENAI_API_KEY found (length: {len(openai_key)})")
     else:
         logger.error("❌ OPENAI_API_KEY not found in environment!")
     
-    # Initialize AgentScope
+    # Initialize conversation manager with PraisonAI agents
     try:
-        if initialize_agentscope():
-            logger.info("✅ AgentScope initialized successfully")
-        else:
-            logger.warning("⚠️ AgentScope initialization failed - using fallback mode")
-    except Exception as e:
-        logger.error(f"❌ AgentScope initialization exception: {e}")
-    
-    # Validate OpenAI connection
-    try:
-        if validate_openai_connection():
-            logger.info("✅ OpenAI API connection validated")
-        else:
-            logger.warning("⚠️ OpenAI API validation failed - check API key")
-    except Exception as e:
-        logger.error(f"❌ OpenAI validation exception: {e}")
-    
-    # Initialize conversation manager
-    try:
+        from app.services.conversation_manager import ConversationManager
         conversation_manager = ConversationManager()
-        logger.info("✅ Conversation manager initialized")
+        logger.info("✅ Conversation manager initialized with OpenAI")
+        
+        # Set the conversation manager in the routes
+        from app.api.routes.conversation import set_conversation_manager
+        set_conversation_manager(conversation_manager)
+        logger.info("✅ Conversation manager injected into routes")
+        
     except Exception as e:
         logger.error(f"❌ Conversation manager initialization failed: {e}")
         conversation_manager = None

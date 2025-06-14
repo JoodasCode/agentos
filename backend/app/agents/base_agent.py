@@ -100,6 +100,8 @@ class ConversationalAgent(DialogAgent):
     """Base class for conversational agents with personality, memory, and questioning intelligence"""
     
     def __init__(self, name: str, personality: dict, conversation_style: str, question_patterns: list, **kwargs):
+        # Set name first so it's available in _build_conversational_prompt
+        self.name = name
         self.personality = personality
         self.conversation_style = conversation_style
         self.question_patterns = question_patterns
