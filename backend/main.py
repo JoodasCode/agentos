@@ -7,6 +7,7 @@ import os
 
 from app.core.config import settings
 from app.core.logging import get_logger
+from app.core.agentscope_config import initialize_agentscope, validate_openai_connection
 from app.api.routes import health, conversation, automation
 
 logger = get_logger(__name__)
@@ -20,34 +21,48 @@ async def lifespan(app: FastAPI):
     global conversation_manager
     
     # Startup
-    logger.info("🚀 Starting Agent OS V2 with PraisonAI...")
+    logger.info("🚀 Starting Agent OS V2 with AgentScope...")
     
     # Check environment variables
     openai_key = os.getenv("OPENAI_API_KEY")
     if openai_key:
         logger.info(f"✅ OPENAI_API_KEY found (length: {len(openai_key)})")
     else:
-        logger.error("❌ OPENAI_API_KEY not found in environment!")
+        logger.warning("❌ OPENAI_API_KEY not found in environment!")
     
-    # Initialize conversation manager with PraisonAI agents
+    # Initialize AgentScope
+    if initialize_agentscope():
+        logger.info("✅ AgentScope initialized successfully")
+        
+        # Validate OpenAI connection
+        if validate_openai_connection():
+            logger.info("✅ OpenAI connection validated")
+        else:
+            logger.warning("⚠️ OpenAI connection validation failed")
+    else:
+        logger.warning("❌ AgentScope initialization failed - using fallback mode")
+    
+    # Initialize conversation manager (after AgentScope is ready)
     try:
         from app.services.conversation_manager import ConversationManager
         conversation_manager = ConversationManager()
-        logger.info("✅ Conversation manager initialized with OpenAI")
-        
-        # Set the conversation manager in the routes
-        from app.api.routes.conversation import set_conversation_manager
-        set_conversation_manager(conversation_manager)
-        logger.info("✅ Conversation manager injected into routes")
-        
+        logger.info("✅ Conversation manager initialized with AgentScope")
     except Exception as e:
         logger.error(f"❌ Conversation manager initialization failed: {e}")
         conversation_manager = None
     
+    # Set conversation manager in routes
+    try:
+        from app.api.routes.conversation import set_conversation_manager
+        set_conversation_manager(conversation_manager)
+        logger.info("✅ Conversation manager set in routes")
+    except Exception as e:
+        logger.error(f"❌ Failed to set conversation manager in routes: {e}")
+    
     yield
     
     # Shutdown
-    logger.info("Shutting down Agent OS V2...")
+    logger.info("🛑 Shutting down Agent OS V2...")
 
 # Create FastAPI app
 app = FastAPI(

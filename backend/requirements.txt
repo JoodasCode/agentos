@@ -6,3 +6,4 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 httpx==0.25.2
 openai==1.86.0
+agentscope==0.1.5

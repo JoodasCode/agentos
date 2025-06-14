@@ -15,8 +15,9 @@ from app.models.conversation import (
     InteractionMode
 )
 
-# Import OpenAI agents
-from app.agents.alex_openai import Alex
+# Import AgentScope agents
+from app.agents.alex_agentscope import Alex
+# Keep OpenAI agents as backup
 from app.agents.dana_openai import Dana  
 from app.agents.riley_openai import Riley
 from app.agents.jamie_openai import Jamie
