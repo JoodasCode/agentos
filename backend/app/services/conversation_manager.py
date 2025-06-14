@@ -90,9 +90,12 @@ class ConversationManager:
             # Determine which agents should respond
             responding_agents = self._determine_responding_agents(message, conversation_id)
             
+            logger.info(f"🤖 About to generate responses from agents: {responding_agents}")
+            
             # Generate responses from agents
             agent_responses = []
             for agent_name in responding_agents:
+                logger.info(f"🎯 Calling agent: {agent_name}")
                 agent = self.agents[agent_name]
                 
                 # Get conversation context for this agent
@@ -100,6 +103,8 @@ class ConversationManager:
                 
                 # Generate response
                 response = await agent.respond(message, agent_context)
+                
+                logger.info(f"✅ Got response from {agent_name}: {response['content'][:100]}...")
                 
                 # Create AgentResponse object
                 agent_response = AgentResponse(
