@@ -12,7 +12,8 @@ from app.models.conversation import (
     AgentResponse, 
     ConversationState,
     MessageType,
-    InteractionMode
+    InteractionMode,
+    ConversationType
 )
 
 # Import AgentScope agents
@@ -108,9 +109,7 @@ class ConversationManager:
                     timestamp=response["timestamp"],
                     questions_asked=response.get("questions_asked", []),
                     quick_options=response.get("quick_options", []),
-                    interaction_mode=response.get("interaction_mode", InteractionMode.ADAPTIVE),
-                    confidence_score=0.9,  # OpenAI agents are generally confident
-                    suggested_next_agents=self._suggest_next_agents(response["content"])
+                    interaction_mode=response.get("interaction_mode", InteractionMode.ADAPTIVE)
                 )
                 
                 agent_responses.append(agent_response)
@@ -128,6 +127,7 @@ class ConversationManager:
             
             # Create and return response
             response = ConversationResponse(
+                type=ConversationType.NEW_CONVERSATION if len(self.conversations[conversation_id]["messages"]) <= 2 else ConversationType.CONTINUED_CONVERSATION,
                 conversation_id=conversation_id,
                 agent_responses=agent_responses,
                 conversation_state=conversation_state,
@@ -147,19 +147,18 @@ class ConversationManager:
                 timestamp=datetime.utcnow(),
                 questions_asked=[],
                 quick_options=[],
-                interaction_mode=InteractionMode.ADAPTIVE,
-                confidence_score=0.0,
-                suggested_next_agents=[]
+                interaction_mode=InteractionMode.ADAPTIVE
             )
             
             return ConversationResponse(
+                type=ConversationType.NEW_CONVERSATION,
                 conversation_id=conversation_id,
                 agent_responses=[error_response],
                 conversation_state=ConversationState(
                     ready_for_action=False,
                     lead_agent="System",
-                    questions_asked=[],
-                    answers_collected={}
+                    pending_questions=[],
+                    answered_questions=[]
                 ),
                 timestamp=datetime.utcnow()
             )
@@ -253,10 +252,11 @@ class ConversationManager:
         conversation["active_agents"] = [resp.agent_name for resp in agent_responses]
         
         return ConversationState(
-            ready_for_action=ready_for_action,
+            active=True,
             lead_agent=lead_agent,
-            questions_asked=all_questions,
-            answers_collected={}  # Could be enhanced to track specific answers
+            pending_questions=all_questions,
+            answered_questions=[],
+            ready_for_action=ready_for_action
         )
     
     async def handle_quick_response(
