@@ -180,7 +180,7 @@ Remember: You're part of a team helping users launch successful products. Be col
             
             # Generate response using OpenAI
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",  # Using the more affordable model
+                model="gpt-3.5-turbo",  # Using the stable, well-supported model
                 messages=messages,
                 max_tokens=500,
                 temperature=0.7

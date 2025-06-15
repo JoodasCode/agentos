@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     
     # OpenAI
     OPENAI_API_KEY: str = ""
-    DEFAULT_MODEL: str = "gpt-4o-mini"
+    DEFAULT_MODEL: str = "gpt-3.5-turbo"
     
     # Supabase
     SUPABASE_URL: Optional[str] = None

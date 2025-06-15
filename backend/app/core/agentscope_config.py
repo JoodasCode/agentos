@@ -69,7 +69,7 @@ def initialize_agentscope():
 
 def get_default_model_config():
     """Get the default model configuration name"""
-    return "gpt-4o-mini"
+    return "gpt-3.5-turbo"
 
 def validate_openai_connection():
     """Validate OpenAI connection through AgentScope"""
