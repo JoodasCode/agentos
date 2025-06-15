@@ -39,13 +39,23 @@ app.add_middleware(
 
 # Include routers (only if imports worked)
 try:
+    print("🔧 Including health router...")
     app.include_router(health.router, prefix="/api/health", tags=["health"])
+    print("🔧 Including conversation router...")
     app.include_router(conversation.router, prefix="/api/conversation", tags=["conversation"])
+    print("🔧 Including automation router...")
     app.include_router(automation.router, prefix="/api/automation", tags=["automation"])
+    print("🔧 Including api_keys router...")
     app.include_router(api_keys.router, prefix="/api/keys", tags=["api-keys"])
+    print("🔧 Including integrations router...")
     app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["integrations"])
-except NameError:
-    print("Routers not available - running in basic mode")
+    print("✅ All routers included successfully!")
+except NameError as e:
+    print(f"❌ NameError including routers: {e}")
+except Exception as e:
+    print(f"❌ Error including routers: {e}")
+    import traceback
+    traceback.print_exc()
 
 @app.get("/")
 async def root():
