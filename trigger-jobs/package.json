@@ -18,6 +18,7 @@
   "license": "ISC",
   "description": "Trigger.dev automation jobs for AgentOS",
   "dependencies": {
+    "@slack/web-api": "^7.9.2",
     "@trigger.dev/sdk": "^3.0.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",

@@ -29,6 +29,8 @@ class Settings(BaseSettings):
     # Supabase
     SUPABASE_URL: Optional[str] = None
     SUPABASE_ANON_KEY: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
+    SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
     
     # Trigger.dev
     TRIGGER_DEV_API_URL: str = "https://api.trigger.dev"

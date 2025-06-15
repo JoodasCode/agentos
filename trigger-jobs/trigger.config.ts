@@ -1,7 +1,7 @@
 import { defineConfig } from "@trigger.dev/sdk/v3";
 
 export default defineConfig({
-  project: "agentos-automation", // We'll update this with actual project ref
+  project: "proj_oszoiqgyzofujbljgxau", // Real project ID from Trigger.dev
   dirs: ["./src/trigger"],
   retries: {
     enabledInDev: false,
@@ -13,4 +13,5 @@ export default defineConfig({
       randomize: true,
     },
   },
+  maxDuration: 300, // 5 minutes max duration for tasks
 }); 

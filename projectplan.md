@@ -148,6 +148,9 @@ Build a conversational multi-agent system that combines AgentScope's orchestrati
     - [x] Send messages, manage channels, team communication
     - [x] Rich message formatting and scheduled messages
     - [x] Connection testing and error handling
+    - [x] **FIXED**: Slack OAuth integration with proper database storage
+    - [x] **FIXED**: Created encrypted_api_keys table in Supabase
+    - [x] **FIXED**: OAuth callback now successfully stores bot tokens
   
   - [x] **Google Calendar Integration** ✅ COMPLETED
     - [x] Complete Google Calendar API integration
@@ -261,3 +264,34 @@ We have a sophisticated conversational AI system with service integrations, but 
 
 **NEXT STEPS:**
 Phase 7 needs to start from scratch with actual Trigger.dev setup, not just fixing configuration issues.
+
+### 🔧 RECENT FIXES (June 15, 2025):
+
+**✅ SLACK OAUTH INTEGRATION FULLY FIXED:**
+- **Problem**: OAuth flow was working (Slack authorization successful) but failing at token storage with "permission denied for schema public" error
+- **Root Cause Analysis**: 
+  1. Missing `encrypted_api_keys` table in Supabase database ✅ FIXED
+  2. Row Level Security (RLS) enabled on system tables blocking service role access ✅ FIXED
+- **Solution**: Used Supabase MCP and Context7 documentation to:
+  - Created missing database tables with proper schema
+  - Disabled RLS on internal system tables (`encrypted_api_keys`, `api_key_usage_logs`)
+  - Granted proper permissions to service_role
+- **Technical Details**:
+  - Service role key correctly configured on Railway
+  - Database tables created with AES-256-GCM encryption support
+  - RLS disabled for system tables to allow admin operations
+  - OAuth scopes: `chat:write`, `channels:read` (minimal working set)
+- **Result**: Slack OAuth flow now works end-to-end:
+  1. ✅ Frontend "Connect Slack" button generates OAuth URL
+  2. ✅ User authorizes on Slack  
+  3. ✅ Slack redirects to callback with authorization code
+  4. ✅ Backend exchanges code for bot token
+  5. ✅ Bot token encrypted and stored in Supabase (PERMISSION ISSUE RESOLVED)
+  6. ✅ Agents can now send Slack messages using stored tokens
+
+**Technical Details:**
+- Database tables created with proper schema, indexes, and relationships
+- Service role key already configured on Railway
+- OAuth scopes: `chat:write`, `channels:read` (minimal working set)
+- Callback URL: `https://agentos-production-6348.up.railway.app/integrations/slack/oauth/callback`
+- All environment variables properly set on Railway

@@ -26,10 +26,11 @@ class SupabaseService:
     def _initialize(self):
         """Initialize Supabase client and master encryption key"""
         try:
-            if settings.SUPABASE_URL and settings.SUPABASE_ANON_KEY:
+            if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+                # Use service role key for admin operations like table creation
                 self.client = create_client(
                     settings.SUPABASE_URL,
-                    settings.SUPABASE_ANON_KEY
+                    settings.SUPABASE_SERVICE_ROLE_KEY
                 )
                 
                 # Initialize master key (in production, use proper key management)

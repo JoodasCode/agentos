@@ -169,6 +169,36 @@ export default function SettingsPage() {
     }
   }
 
+  const connectSlack = async () => {
+    try {
+      const sessionId = 'demo-session' // In production, use actual session ID
+      const response = await fetch(`https://agentos-production-6348.up.railway.app/integrations/slack/oauth/authorize?session_id=${sessionId}`)
+      const result = await response.json()
+      
+      if (result.success && result.auth_url) {
+        // Open Slack OAuth in new window
+        window.open(result.auth_url, 'slack-oauth', 'width=600,height=600')
+      }
+    } catch (error) {
+      console.error('Error connecting to Slack:', error)
+    }
+  }
+
+  const connectNotion = async () => {
+    // For now, show manual setup instructions
+    alert('Notion OAuth integration coming soon! For now, please add your Notion API key manually in the API Keys tab.')
+  }
+
+  const connectGoogleCalendar = async () => {
+    // For now, show manual setup instructions
+    alert('Google Calendar OAuth integration coming soon! For now, please add your Google Calendar API key manually in the API Keys tab.')
+  }
+
+  const connectGitHub = async () => {
+    // For now, show manual setup instructions
+    alert('GitHub OAuth integration coming soon! For now, please add your GitHub API key manually in the API Keys tab.')
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
@@ -364,40 +394,203 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div>
                   <h2 className="text-xl font-semibold">Service Integrations</h2>
-                  <p className="text-gray-600">Available services for automation</p>
+                  <p className="text-gray-600">Connect your favorite services with one click</p>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {services.map((service) => (
-                    <div key={service.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="text-2xl">{service.icon}</div>
-                          <div>
-                            <h3 className="font-medium">{service.name}</h3>
-                            <p className="text-sm text-gray-600">{service.description}</p>
-                          </div>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a href={service.docs_url} target="_blank" rel="noopener noreferrer">
-                              <ExternalLink className="w-4 h-4" />
-                            </a>
-                          </Button>
+                {/* Featured Integrations */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Slack Integration */}
+                  <div className="border border-gray-200 rounded-lg p-6 bg-gradient-to-br from-purple-50 to-pink-50">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-3xl">💬</div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Slack</h3>
+                          <p className="text-sm text-gray-600">Send messages and manage channels</p>
                         </div>
                       </div>
-                      <div className="mt-3">
-                        <p className="text-xs text-gray-500 mb-2">Required scopes:</p>
-                        <div className="flex flex-wrap gap-1">
-                          {service.required_scopes.map((scope, index) => (
-                            <Badge key={index} variant="secondary" className="text-xs">
-                              {scope}
-                            </Badge>
-                          ))}
+                      <Badge variant="secondary" className="bg-green-100 text-green-800">
+                        Popular
+                      </Badge>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium mb-2">What you can do:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Send messages to channels</li>
+                          <li>Create and manage channels</li>
+                          <li>Upload files and documents</li>
+                          <li>Get workspace information</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          className="flex-1 bg-purple-600 hover:bg-purple-700"
+                          onClick={() => connectSlack()}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Connect Slack
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href="https://api.slack.com/docs" target="_blank" rel="noopener noreferrer">
+                            Docs
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Notion Integration */}
+                  <div className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-3xl">📝</div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Notion</h3>
+                          <p className="text-sm text-gray-600">Create pages and manage databases</p>
                         </div>
                       </div>
                     </div>
-                  ))}
+                    
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium mb-2">What you can do:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Create and update pages</li>
+                          <li>Manage database entries</li>
+                          <li>Search and retrieve content</li>
+                          <li>Organize your workspace</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          className="flex-1"
+                          onClick={() => connectNotion()}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Connect Notion
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href="https://developers.notion.com" target="_blank" rel="noopener noreferrer">
+                            Docs
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Google Calendar Integration */}
+                  <div className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-3xl">📅</div>
+                        <div>
+                          <h3 className="font-semibold text-lg">Google Calendar</h3>
+                          <p className="text-sm text-gray-600">Schedule events and manage calendars</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium mb-2">What you can do:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Create and update events</li>
+                          <li>Schedule meetings</li>
+                          <li>Manage multiple calendars</li>
+                          <li>Send invitations</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          className="flex-1"
+                          onClick={() => connectGoogleCalendar()}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Connect Calendar
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href="https://developers.google.com/calendar" target="_blank" rel="noopener noreferrer">
+                            Docs
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* GitHub Integration */}
+                  <div className="border border-gray-200 rounded-lg p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div className="flex items-center gap-3">
+                        <div className="text-3xl">🐙</div>
+                        <div>
+                          <h3 className="font-semibold text-lg">GitHub</h3>
+                          <p className="text-sm text-gray-600">Manage repositories and issues</p>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600">
+                        <p className="font-medium mb-2">What you can do:</p>
+                        <ul className="list-disc list-inside space-y-1 text-xs">
+                          <li>Create and manage repositories</li>
+                          <li>Handle issues and pull requests</li>
+                          <li>Monitor project activity</li>
+                          <li>Automate workflows</li>
+                        </ul>
+                      </div>
+                      
+                      <div className="flex gap-2">
+                        <Button 
+                          className="flex-1"
+                          onClick={() => connectGitHub()}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          Connect GitHub
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <a href="https://docs.github.com/en/rest" target="_blank" rel="noopener noreferrer">
+                            Docs
+                          </a>
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Connection Status */}
+                <div className="border-t pt-6">
+                  <h3 className="font-medium mb-4">Connected Services</h3>
+                  <div className="space-y-2">
+                    {apiKeys.length === 0 ? (
+                      <p className="text-gray-500 text-sm">No services connected yet. Connect your first service above!</p>
+                    ) : (
+                      apiKeys.map((key) => (
+                        <div key={key.id} className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                            <div>
+                              <p className="font-medium text-green-900">{key.service_name}</p>
+                              <p className="text-sm text-green-700">Connected • {key.key_name}</p>
+                            </div>
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => deleteApiKey(key.id)}
+                            className="text-red-600 hover:text-red-700 border-red-200"
+                          >
+                            Disconnect
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
                 </div>
               </div>
             </TabsContent>

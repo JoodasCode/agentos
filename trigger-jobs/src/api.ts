@@ -8,10 +8,12 @@ import cors from 'cors';
 import { productHuntLaunchTask } from './trigger/product-hunt-launch';
 import { contentGenerationTask } from './trigger/content-generation';
 import { analyticsTrackingTask } from './trigger/analytics-tracking';
+import { sendSlackMessage, createSlackChannel, getSlackWorkspaceInfo, demoAgentOSSlackIntegration } from './trigger/slack-integration';
 
 const app = express();
-const port = process.env.TRIGGER_API_PORT || 3001;
+const PORT = process.env.PORT || 3001;
 
+// Middleware
 app.use(cors());
 app.use(express.json());
 
@@ -19,8 +21,8 @@ app.use(express.json());
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'healthy', 
-    timestamp: new Date().toISOString(),
-    tasks: ['product-hunt-launch', 'content-generation', 'analytics-tracking']
+    service: 'Trigger.dev API Server',
+    timestamp: new Date().toISOString()
   });
 });
 
@@ -148,7 +150,160 @@ app.get('/runs/:runId', async (req, res) => {
   }
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Trigger.dev API Bridge running on port ${port}`);
-  console.log(`Health check: http://localhost:${port}/health`);
+// Slack Integration Endpoints
+app.post('/api/trigger/send-slack-message', async (req, res) => {
+  try {
+    const { slack_bot_token, channel, message, user_name } = req.body;
+    
+    // Set environment variable for this request
+    process.env.SLACK_BOT_TOKEN = slack_bot_token;
+    
+    // Trigger the Slack message task with correct parameters
+    const handle = await sendSlackMessage.trigger({
+      channel: channel || 'general',
+      message: message || `Hello from Agent OS! Message sent by ${user_name || 'Agent'}`,
+      agent_name: user_name || 'Agent'
+    });
+
+    res.json({
+      success: true,
+      taskId: handle.id,
+      message: 'Slack message task triggered successfully',
+      handle: handle
+    });
+  } catch (error) {
+    console.error('Error triggering Slack message task:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/trigger/slack-workspace-info', async (req, res) => {
+  try {
+    const { slack_bot_token } = req.body;
+    
+    // Set environment variable for this request
+    process.env.SLACK_BOT_TOKEN = slack_bot_token;
+    
+    // Trigger the workspace info task (no parameters needed)
+    const handle = await getSlackWorkspaceInfo.trigger();
+
+    res.json({
+      success: true,
+      taskId: handle.id,
+      message: 'Slack workspace info task triggered successfully',
+      handle: handle
+    });
+  } catch (error) {
+    console.error('Error triggering Slack workspace info task:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/trigger/demo-slack-integration', async (req, res) => {
+  try {
+    const { slack_bot_token, demo_channel, user_name } = req.body;
+    
+    // Set environment variable for this request
+    process.env.SLACK_BOT_TOKEN = slack_bot_token;
+    
+    // Trigger the demo integration task with correct parameters
+    const handle = await demoAgentOSSlackIntegration.trigger({
+      demo_channel: demo_channel || 'general',
+      user_name: user_name || 'Demo User'
+    });
+
+    res.json({
+      success: true,
+      taskId: handle.id,
+      message: 'Slack demo integration task triggered successfully',
+      handle: handle,
+      next_steps: [
+        "✅ Demo message sent to Slack",
+        "🤖 Agent OS is now connected to your workspace",
+        "💬 Your agents can send messages to any channel",
+        "🚀 Try asking Dana to send a message!"
+      ]
+    });
+  } catch (error) {
+    console.error('Error triggering Slack demo task:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+app.post('/api/trigger/create-slack-channel', async (req, res) => {
+  try {
+    const { slack_bot_token, channel_name, is_private, purpose } = req.body;
+    
+    // Set environment variable for this request
+    process.env.SLACK_BOT_TOKEN = slack_bot_token;
+    
+    // Trigger the create channel task with correct parameters
+    const handle = await createSlackChannel.trigger({
+      channel_name: channel_name,
+      is_private: is_private || false,
+      purpose: purpose
+    });
+
+    res.json({
+      success: true,
+      taskId: handle.id,
+      message: 'Slack channel creation task triggered successfully',
+      handle: handle
+    });
+  } catch (error) {
+    console.error('Error triggering Slack channel creation task:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Agent-specific endpoints for direct task triggering
+app.post('/api/agents/dana/send-slack-message', async (req, res) => {
+  try {
+    const { slack_bot_token, channel, message } = req.body;
+    
+    // Set environment variable for this request
+    process.env.SLACK_BOT_TOKEN = slack_bot_token;
+    
+    // Dana-specific Slack message with branding
+    const danaMessage = `🎨 **Dana (Creative Agent)**: ${message}`;
+    
+    const handle = await sendSlackMessage.trigger({
+      channel: channel || 'general',
+      message: danaMessage,
+      agent_name: 'Dana (Agent OS)'
+    });
+
+    res.json({
+      success: true,
+      agent: 'Dana',
+      taskId: handle.id,
+      message: 'Dana sent your Slack message!',
+      handle: handle
+    });
+  } catch (error) {
+    console.error('Error with Dana Slack message:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Start server
+app.listen(PORT, () => {
+  console.log(`🚀 Trigger.dev API Server running on port ${PORT}`);
+  console.log(`📡 Health check: http://localhost:${PORT}/health`);
+  console.log(`💬 Slack endpoints available at /api/trigger/*`);
 }); 
