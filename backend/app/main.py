@@ -5,7 +5,6 @@ import uvicorn
 
 try:
     from app.core.config import get_settings
-    from app.api.routes import conversation, health, automation, api_keys, integrations
     from app.core.logging import setup_logging
     
     # Setup logging
@@ -14,10 +13,49 @@ try:
     # Get settings
     settings = get_settings()
     
+    print("✅ Core imports successful")
+    
 except ImportError as e:
-    print(f"Import error: {e}")
+    print(f"❌ Core import error: {e}")
     # Fallback for basic functionality
     settings = None
+
+# Import routers individually with error handling
+health = None
+conversation = None
+automation = None
+api_keys = None
+integrations = None
+
+try:
+    from app.api.routes import health
+    print("✅ Health router imported")
+except Exception as e:
+    print(f"❌ Health router import failed: {e}")
+
+try:
+    from app.api.routes import conversation
+    print("✅ Conversation router imported")
+except Exception as e:
+    print(f"❌ Conversation router import failed: {e}")
+
+try:
+    from app.api.routes import automation
+    print("✅ Automation router imported")
+except Exception as e:
+    print(f"❌ Automation router import failed: {e}")
+
+try:
+    from app.api.routes import api_keys
+    print("✅ API keys router imported")
+except Exception as e:
+    print(f"❌ API keys router import failed: {e}")
+
+try:
+    from app.api.routes import integrations
+    print("✅ Integrations router imported")
+except Exception as e:
+    print(f"❌ Integrations router import failed: {e}")
 
 # Create FastAPI app
 app = FastAPI(
@@ -38,24 +76,47 @@ app.add_middleware(
 )
 
 # Include routers (only if imports worked)
-try:
-    print("🔧 Including health router...")
-    app.include_router(health.router, prefix="/api/health", tags=["health"])
-    print("🔧 Including conversation router...")
-    app.include_router(conversation.router, prefix="/api/conversation", tags=["conversation"])
-    print("🔧 Including automation router...")
-    app.include_router(automation.router, prefix="/api/automation", tags=["automation"])
-    print("🔧 Including api_keys router...")
-    app.include_router(api_keys.router, prefix="/api/keys", tags=["api-keys"])
-    print("🔧 Including integrations router...")
-    app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["integrations"])
-    print("✅ All routers included successfully!")
-except NameError as e:
-    print(f"❌ NameError including routers: {e}")
-except Exception as e:
-    print(f"❌ Error including routers: {e}")
-    import traceback
-    traceback.print_exc()
+if health:
+    try:
+        print("🔧 Including health router...")
+        app.include_router(health.router, prefix="/api/health", tags=["health"])
+        print("✅ Health router included")
+    except Exception as e:
+        print(f"❌ Error including health router: {e}")
+
+if conversation:
+    try:
+        print("🔧 Including conversation router...")
+        app.include_router(conversation.router, prefix="/api/conversation", tags=["conversation"])
+        print("✅ Conversation router included")
+    except Exception as e:
+        print(f"❌ Error including conversation router: {e}")
+
+if automation:
+    try:
+        print("🔧 Including automation router...")
+        app.include_router(automation.router, prefix="/api/automation", tags=["automation"])
+        print("✅ Automation router included")
+    except Exception as e:
+        print(f"❌ Error including automation router: {e}")
+
+if api_keys:
+    try:
+        print("🔧 Including api_keys router...")
+        app.include_router(api_keys.router, prefix="/api/keys", tags=["api-keys"])
+        print("✅ API keys router included")
+    except Exception as e:
+        print(f"❌ Error including api_keys router: {e}")
+
+if integrations:
+    try:
+        print("🔧 Including integrations router...")
+        app.include_router(integrations.router, prefix="/api/v1/integrations", tags=["integrations"])
+        print("✅ Integrations router included")
+    except Exception as e:
+        print(f"❌ Error including integrations router: {e}")
+
+print(f"🎯 Final router status: health={bool(health)}, conversation={bool(conversation)}, automation={bool(automation)}, api_keys={bool(api_keys)}, integrations={bool(integrations)}")
 
 @app.get("/")
 async def root():
