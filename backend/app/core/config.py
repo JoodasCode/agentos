@@ -13,6 +13,9 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     PROJECT_NAME: str = "Agent OS V2"
     
+    # Security
+    SECRET_KEY: str = ""
+    
     # CORS
     ALLOWED_ORIGINS: List[str] = ["*"]
     
